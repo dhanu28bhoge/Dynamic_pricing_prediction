@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analytics - AI Pricing</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: #e2e8f0;
+        }
+
+        .hamburger {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 1200;
+            background: rgba(56,189,248,0.15);
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+            z-index: 900;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: rgba(2,6,23,0.95);
+            padding: 90px 20px;
+            position: fixed;
+            left: -280px;
+            top: 0;
+            transition: 0.35s ease;
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .menu-item {
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #1e293b;
+        }
+
+        .menu-item:hover {
+            background: #334155;
+        }
+
+        .header {
+            padding: 20px;
+            font-size: 26px;
+            font-weight: bold;
+            color: #38bdf8;
+            text-align: center;
+        }
+
+        .container {
+            padding: 40px;
+        }
+
+        .box {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border: none;
+            background: #0b1220;
+            color: white;
+        }
+
+        canvas {
+            background: #0b1220;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="hamburger" onclick="toggleMenu()">☰</div>
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<div class="sidebar" id="sidebar">
+    <div class="menu-item" onclick="location.href='homepage.html'">🏠 Home</div>
+    <div class="menu-item" onclick="location.href='index.html'">➕ Add Product</div>
+    <div class="menu-item" onclick="location.href='analytics.html'">📊 Analytics</div>
+    <div class="menu-item" onclick="location.href='reports.html'">📈 Reports</div>
+    <div class="menu-item" onclick="location.href='settings.html'">⚙ Settings</div>
+</div>
+
+<div class="header">📊 Product Demand Analytics</div>
+
+<div class="container">
+    <div class="box">
+
+        <select id="productSelect" onchange="updateCharts()">
+            <option value="all">All Products</option>
+        </select>
+
+        <canvas id="demandChart"></canvas>
+        <canvas id="priceDemandChart"></canvas>
+
+    </div>
+</div>
+
+<script>
+
+function toggleMenu() {
+    document.getElementById("sidebar").classList.toggle("active");
+    document.getElementById("overlay").classList.toggle("active");
+}
+
+// =======================
+// CHART 1 - DEMAND
+// =======================
+let ctx = document.getElementById('demandChart').getContext('2d');
+
+let demandChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: "Demand Score",
+            data: [],
+            borderColor: "#38bdf8",
+            backgroundColor: "rgba(56,189,248,0.2)",
+            fill: true,
+            tension: 0.4
+        }]
+    }
+});
+
+// =======================
+// CHART 2 - PRICE vs DEMAND
+// =======================
+let ctx2 = document.getElementById('priceDemandChart').getContext('2d');
+
+let priceChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: [],
+        datasets: [
+            {
+                label: "Price (£)",
+                data: [],
+                backgroundColor: "rgba(56,189,248,0.6)"
+            },
+            {
+                label: "Demand",
+                data: [],
+                backgroundColor: "rgba(96,165,250,0.6)"
+            }
+        ]
+    }
+});
+
+// =======================
+// FETCH BACKEND DATA
+// =======================
+function updateCharts() {
+
+    fetch("http://127.0.0.1:5000/analytics_data")
+    .then(res => res.json())
+    .then(data => {
+
+        let select = document.getElementById("productSelect");
+
+        // ✅ preserve selected value
+        let currentValue = select.value;
+
+        // RESET dropdown safely
+        select.innerHTML = `<option value="all">All Products</option>`;
+
+        let uniqueNames = [...new Set(data.map(p => p.name))];
+
+        uniqueNames.forEach(name => {
+            let opt = document.createElement("option");
+            opt.value = name;
+            opt.innerText = name;
+            select.appendChild(opt);
+        });
+
+        // restore selection
+        select.value = currentValue;
+
+        // FILTER
+        let selected = select.value;
+        let filtered = (selected === "all")
+            ? data
+            : data.filter(p => p.name === selected);
+
+        let labels = [];
+        let demandData = [];
+        let priceData = [];
+
+        filtered.forEach(p => {
+            labels.push(p.name);
+            demandData.push(Number(p.demand));
+            priceData.push(Number(p.price));
+        });
+
+        // =====================
+        // UPDATE CHART 1
+        // =====================
+        demandChart.data.labels = labels;
+        demandChart.data.datasets[0].data = demandData;
+        demandChart.update();
+
+        // =====================
+        // UPDATE CHART 2
+        // =====================
+        priceChart.data.labels = labels;
+        priceChart.data.datasets[0].data = priceData;
+        priceChart.data.datasets[1].data = demandData;
+        priceChart.update();
+
+    })
+    .catch(err => console.log("Backend not running", err));
+}
+
+// =======================
+// ONLY MANUAL LOAD (NO AUTO REFRESH)
+// =======================
+window.onload = updateCharts;
+
+</script>
+
+</body>
+</html>
