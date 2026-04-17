@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reports Dashboard - AI Pricing System</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: #e2e8f0;
+        }
+
+        .hamburger {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 1200;
+            background: rgba(56,189,248,0.15);
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+            z-index: 900;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: rgba(2,6,23,0.95);
+            padding: 90px 20px;
+            position: fixed;
+            left: -280px;
+            top: 0;
+            transition: 0.35s ease;
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .menu-item {
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #1e293b;
+        }
+
+        .menu-item:hover {
+            background: #334155;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .title {
+            color: #38bdf8;
+            font-size: 14px;
+        }
+
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .table-box {
+            margin: 20px;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+            text-align: left;
+        }
+
+        th {
+            color: #38bdf8;
+        }
+
+        .chart-box {
+            margin: 20px;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="hamburger" onclick="toggleMenu()">☰</div>
+
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<div class="sidebar" id="sidebar">
+    <div class="menu-item" onclick="location.href='homepage.html'">🏠 Home</div>
+    <div class="menu-item" onclick="location.href='index.html'">➕ Add Product</div>
+    <div class="menu-item" onclick="location.href='analytics.html'">📊 Analytics</div>
+    <div class="menu-item" onclick="location.href='reports.html'">📈 Reports</div>
+    <div class="menu-item" onclick="location.href='settings.html'">⚙ Settings</div>
+</div>
+
+<div class="header">📈 Reports Dashboard</div>
+
+<div class="grid">
+    <div class="card">
+        <div class="title">Total Products</div>
+        <div class="value" id="total">0</div>
+    </div>
+
+    <div class="card">
+        <div class="title">High Demand</div>
+        <div class="value" id="high">0</div>
+    </div>
+
+    <div class="card">
+        <div class="title">Moderate Demand</div>
+        <div class="value" id="medium">0</div>
+    </div>
+
+    <div class="card">
+        <div class="title">Low Demand</div>
+        <div class="value" id="low">0</div>
+    </div>
+</div>
+
+<div class="chart-box">
+    <canvas id="demandChart"></canvas>
+</div>
+
+<!-- ✅ DOWNLOAD BUTTON ADDED -->
+<div style="text-align:right; padding: 0 20px;">
+    <button onclick="downloadExcel()" 
+        style="padding:10px 15px; border:none; border-radius:8px; background:#38bdf8; cursor:pointer;">
+        ⬇ Download Excel
+    </button>
+</div>
+
+<div class="table-box">
+    <h3>📊 Product Report Table</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Demand</th>
+                <th>Suggested Price</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+<script>
+
+function toggleMenu() {
+    document.getElementById("sidebar").classList.toggle("active");
+    document.getElementById("overlay").classList.toggle("active");
+}
+
+let chart = new Chart(document.getElementById("demandChart"), {
+    type: 'bar',
+    data: {
+        labels: [],
+        datasets: [{
+            label: "Demand",
+            data: [],
+            backgroundColor: "#38bdf8"
+        }]
+    }
+});
+
+function loadReports() {
+
+    fetch("http://127.0.0.1:5000/analytics_data")
+    .then(res => res.json())
+    .then(data => {
+
+        let total = data.length;
+        let high = 0, medium = 0, low = 0;
+
+        let labels = [];
+        let demandData = [];
+
+        let tableHTML = "";
+
+        data.forEach(p => {
+
+            labels.push(p.name);
+            demandData.push(Number(p.demand || 0));
+
+            if (p.demand_level.includes("High")) {
+    high++;
+}
+else if (p.demand_level.includes("Moderate")) {
+    medium++;
+}
+else {
+    low++;
+}
+
+            tableHTML += `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>£ ${p.price}</td>
+                    <td>${p.demand}</td>
+                    <td>£ ${p.suggested_price}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById("total").innerText = total;
+        document.getElementById("high").innerText = high;
+        document.getElementById("medium").innerText = medium;
+        document.getElementById("low").innerText = low;
+
+        document.getElementById("tableBody").innerHTML = tableHTML;
+
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = demandData;
+        chart.update();
+
+    })
+    .catch(err => console.log(err));
+}
+
+setInterval(loadReports, 2000);
+loadReports();
+
+
+// ✅ EXCEL DOWNLOAD FUNCTION ADDED
+function downloadExcel() {
+
+    fetch("http://127.0.0.1:5000/analytics_data")
+    .then(res => res.json())
+    .then(data => {
+
+        let csv = "Product,Price,Demand,Suggested Price\n";
+
+        data.forEach(p => {
+            csv += `${p.name},${p.price},${p.demand},${p.suggested_price}\n`;
+        });
+
+        let blob = new Blob([csv], { type: "text/csv" });
+        let url = window.URL.createObjectURL(blob);
+
+        let a = document.createElement("a");
+        a.href = url;
+        a.download = "AI_Pricing_Report.csv";
+        a.click();
+
+        window.URL.revokeObjectURL(url);
+    });
+}
+
+</script>
+
+</body>
+</html>
