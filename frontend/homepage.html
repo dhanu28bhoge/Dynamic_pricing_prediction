@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Pricing System</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: #0b1220;
+            color: #e2e8f0;
+            display: flex;
+        }
+
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 26px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        .logo {
+            position: fixed;
+            top: 20px;
+            left: 70px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+
+        .sidebar {
+            width: 240px;
+            height: 100vh;
+            background: #050b18;
+            padding: 80px 20px 20px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            box-sizing: border-box;
+            z-index: 999;
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+            z-index: 998;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .menu-item {
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #1e293b;
+        }
+
+        .menu-item:hover {
+            background: #334155;
+        }
+
+        .main {
+            margin-left: 0;
+            padding: 100px 40px 40px 40px;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        .main.shift {
+            margin-left: 240px;
+        }
+
+        /* ✅ CLEAN PREMIUM TITLE */
+        .title {
+            font-size: 34px;
+            font-weight: 600;
+            line-height: 1.5;
+            color: #e2e8f0;
+            max-width: 750px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .title::after {
+            content: "";
+            display: block;
+            width: 80px;
+            height: 4px;
+            margin-top: 12px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #38bdf8, #6366f1);
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: #38bdf8;
+            color: black;
+            margin-bottom: 30px;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #0ea5e9;
+        }
+
+        /* ✅ AESTHETIC CARDS */
+        .cards {
+            display: flex;
+            gap: 20px;
+        }
+
+        .card {
+            flex: 1;
+            background: linear-gradient(145deg, #111827, #0f172a);
+            padding: 22px;
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+            border: 1px solid rgba(56,189,248,0.1);
+        }
+
+        .card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(56,189,248,0.15);
+            border: 1px solid rgba(56,189,248,0.4);
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .card p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* subtle glow effect */
+        .card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(56,189,248,0.1), transparent 70%);
+            opacity: 0;
+            transition: 0.5s;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="hamburger" onclick="toggleMenu()">☰</div>
+<div class="logo">⚡ DynamiQ Pricing</div>
+
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<div class="sidebar" id="sidebar">
+    <div class="menu-item" onclick="location.href='homepage.html'">🏠 Home</div>
+    <div class="menu-item" onclick="location.href='index.html'">➕ Add Product</div>
+    <div class="menu-item" onclick="location.href='analytics.html'">📊 Analytics</div>
+    <div class="menu-item" onclick="location.href='reports.html'">📈 Reports</div>
+    <div class="menu-item" onclick="location.href='settings.html'">⚙ Settings</div>
+</div>
+
+<div class="main" id="main">
+
+    <!-- ✅ UPDATED TITLE -->
+    <div class="title">
+        AI-Driven Dynamic Pricing for Real-Time Market Decisions
+    </div>
+
+    <div class="subtitle">
+        Machine Learning powered demand forecasting + dynamic price optimization for local vendors, retail shops, and e-commerce platforms.
+    </div>
+
+    <button class="btn" onclick="goToApp()">Start Pricing</button>
+
+    <!-- ✅ AESTHETIC CARDS -->
+    <div class="cards">
+        <div class="card">
+            <h3>📊 Demand Forecasting Engine</h3>
+            <p>Uses historical sales patterns and time-based trends to predict future demand accurately.</p>
+        </div>
+
+        <div class="card">
+            <h3>💰 Dynamic Price Optimization</h3>
+            <p>Automatically suggests optimal pricing to maximize profit and reduce losses.</p>
+        </div>
+
+        <div class="card">
+            <h3>⚡ Real-Time AI Predictions</h3>
+            <p>Instant machine learning predictions powered by backend API integration.</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function toggleMenu() {
+    document.getElementById("sidebar").classList.toggle("active");
+    document.getElementById("main").classList.toggle("shift");
+    document.getElementById("overlay").classList.toggle("active");
+}
+
+function goToApp() {
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
