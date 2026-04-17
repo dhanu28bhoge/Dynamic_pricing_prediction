@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Pricing System</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .hamburger {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 1200;
+            background: rgba(56,189,248,0.15);
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+
+        .logo {
+            position: fixed;
+            top: 18px;
+            left: 70px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: rgba(2,6,23,0.95);
+            padding: 90px 20px;
+            position: fixed;
+            left: -280px;
+            top: 0;
+            transition: 0.35s ease;
+            z-index: 1000;
+        }
+
+        .sidebar.active { left: 0; }
+
+        .menu-item {
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #1e293b;
+        }
+
+        .menu-item:hover { background: #334155; }
+
+        .main {
+            padding: 110px 50px;
+        }
+
+        .title {
+            font-size: 34px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #38bdf8;
+        }
+
+        .content {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .form-box, .result-box {
+            flex: 1;
+            min-width: 300px;
+            background: #1e293b;
+            padding: 28px;
+            border-radius: 18px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 12px;
+            border: none;
+            background: #0b1220;
+            color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #38bdf8, #60a5fa);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .result-card {
+            margin-bottom: 15px;
+            background: rgba(56,189,248,0.08);
+            padding: 18px;
+            border-radius: 12px;
+        }
+
+        .result-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+
+        .suggestion {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(56,189,248,0.08);
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="hamburger" onclick="toggleMenu()">☰</div>
+<div class="logo">⚡ AI Pricing</div>
+
+<div class="sidebar" id="sidebar">
+    <div class="menu-item" onclick="location.href='homepage.html'">🏠 Home</div>
+    <div class="menu-item" onclick="location.href='index.html'">➕ Add Product</div>
+    <div class="menu-item" onclick="location.href='analytics.html'">📊 Analytics</div>
+    <div class="menu-item" onclick="location.href='reports.html'">📈 Reports</div>
+    <div class="menu-item" onclick="location.href='settings.html'">⚙ Settings</div>
+</div>
+
+<div class="main">
+    <div class="title">Dynamic Pricing Prediction</div>
+
+    <div class="content">
+
+        <div class="form-box">
+            <form id="pricingForm">
+
+                <input type="text" id="product" placeholder="Product Name" required>
+                <input type="number" id="price" step="0.01" placeholder="Price" required>
+
+                <select id="month" onchange="updateDays()" required>
+                    <option value="">Select Month</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+
+                <select id="day" required>
+                    <option value="">Select Day</option>
+                </select>
+
+                <button type="submit">Predict</button>
+            </form>
+        </div>
+
+        <div class="result-box">
+
+            <div class="result-card">
+                <div>Product</div>
+                <div class="result-value" id="productResult">--</div>
+            </div>
+
+            <div class="result-card">
+                <div>Predicted Demand </div>
+                <div class="result-value" id="demand">--</div>
+            </div>
+
+            <div class="result-card">
+                <div>Suggested Price</div>
+                <div class="result-value" id="priceResult">--</div>
+            </div>
+
+            <div class="suggestion" id="suggestionBox">
+                AI suggestion will appear here
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+function toggleMenu(){
+    document.getElementById("sidebar").classList.toggle("active");
+}
+
+function updateDays(){
+    let month = Number(document.getElementById("month").value);
+    let daySelect = document.getElementById("day");
+
+    daySelect.innerHTML = '<option value="">Select Day</option>';
+
+    let days = 31;
+    if(month === 2) days = 29;
+    else if([4,6,9,11].includes(month)) days = 30;
+
+    for(let i = 1; i <= days; i++){
+        let opt = document.createElement("option");
+        opt.value = i;
+        opt.innerText = i;
+        daySelect.appendChild(opt);
+    }
+}
+
+document.getElementById("pricingForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    let product = document.getElementById("product").value;
+    let price = Number(document.getElementById("price").value);
+    let month = Number(document.getElementById("month").value);
+    let day = Number(document.getElementById("day").value);
+
+    let product_code = product.split("").reduce((a,b)=>a+b.charCodeAt(0),0);
+
+    fetch("http://127.0.0.1:5000/add_product", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            name: product,
+            price: price,
+            month: month,
+            day: day,
+            product_code: product_code
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        let demand = parseFloat(data.predicted_demand) || 0;
+        let finalPrice = data.price || 0;
+
+        document.getElementById("productResult").innerText = data.name;
+        document.getElementById("demand").innerText = demand.toFixed(2);
+        document.getElementById("priceResult").innerText = "£ " + finalPrice.toFixed(2);
+
+        document.getElementById("suggestionBox").innerText =
+            demand >= 6 ? "🔥 High demand → Price increased" :
+            demand >= 3 ? "📊 Moderate demand → Stable" :
+            "⚠ Low demand → Discount applied";
+
+    })
+    .catch(err => {
+        console.error("ERROR:", err);
+        alert("Something went wrong ⚠");
+    });
+});
+</script>
+
+</body>
+</html>
